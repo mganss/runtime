@@ -1152,8 +1152,8 @@ namespace System.Xml.Serialization
             if (memberTypeDesc.IsAbstract) return;
             if (memberTypeDesc.IsArrayLike)
             {
-                string aVar = "a" + memberTypeDesc.Name;
-                string aiVar = "ai" + memberTypeDesc.Name;
+                string aVar = "a" + VarName(memberTypeDesc);
+                string aiVar = "ai" + VarName(memberTypeDesc);
                 string iVar = "i";
                 string fullTypeName = memberTypeDesc.CSharpName;
                 WriteArrayLocalDecl(fullTypeName, aVar, source, memberTypeDesc);
@@ -1401,15 +1401,16 @@ namespace System.Xml.Serialization
                 WriteArray(source, choiceSource, elements, text, choice, memberTypeDesc);
             else
                 // NOTE: Use different variable name to work around reuse same variable name in different scope
-                WriteElements(source, choiceSource, elements, text, choice, "a" + memberTypeDesc.Name, writeAccessors, memberTypeDesc.IsNullable);
+                WriteElements(source, choiceSource, elements, text, choice, "a" + VarName(memberTypeDesc), writeAccessors, memberTypeDesc.IsNullable);
         }
 
+        private static string VarName(TypeDesc t) => "|" + t.FullName.Replace('[', '|').Replace(']', '|');
 
         private void WriteArray(SourceInfo source, string? choiceSource, ElementAccessor[] elements, TextAccessor? text, ChoiceIdentifierAccessor? choice, TypeDesc arrayTypeDesc)
         {
             if (elements.Length == 0 && text == null) return;
             string arrayTypeName = arrayTypeDesc.CSharpName;
-            string aName = "a" + arrayTypeDesc.Name;
+            string aName = "a" + VarName(arrayTypeDesc);
             WriteArrayLocalDecl(arrayTypeName, aName, source, arrayTypeDesc);
             LocalBuilder aLoc = ilg.GetLocal(aName);
             if (arrayTypeDesc.IsNullable)
@@ -1424,7 +1425,7 @@ namespace System.Xml.Serialization
             {
                 string choiceFullName = choice.Mapping!.TypeDesc!.CSharpName;
                 SourceInfo choiceSourceInfo = new SourceInfo(choiceSource!, null, choice.MemberInfo, null, ilg);
-                cName = "c" + choice.Mapping.TypeDesc.Name;
+                cName = "c" + VarName(choice.Mapping.TypeDesc);
                 WriteArrayLocalDecl(choiceFullName + "[]", cName, choiceSourceInfo, choice.Mapping.TypeDesc);
                 // write check for the choice identifier array
                 Label labelEnd = ilg.DefineLabel();
@@ -1509,8 +1510,8 @@ namespace System.Xml.Serialization
                 ilg.Load(null);
                 ilg.If(Cmp.NotEqualTo);
                 ilg.WhileBegin();
-                string arrayNamePlusA = (arrayName).Replace(arrayTypeDesc.Name, "") + "a" + arrayElementTypeDesc.Name;
-                string arrayNamePlusI = (arrayName).Replace(arrayTypeDesc.Name, "") + "i" + arrayElementTypeDesc.Name;
+                string arrayNamePlusA = (arrayName).Replace(VarName(arrayTypeDesc), "") + "a" + VarName(arrayElementTypeDesc);
+                string arrayNamePlusI = (arrayName).Replace(VarName(arrayTypeDesc), "") + "i" + VarName(arrayElementTypeDesc);
                 WriteLocalDecl(arrayNamePlusI, "e.Current", arrayElementTypeDesc.Type!);
                 WriteElements(new SourceInfo(arrayNamePlusI, null, null, arrayElementTypeDesc.Type, ilg), choiceName + "i", elements, text, choice, arrayNamePlusA, true, true);
 
@@ -1529,9 +1530,9 @@ namespace System.Xml.Serialization
             else
             {
                 // Filter out type specific for index (code match reusing local).
-                string iPlusArrayName = "i" + (arrayName).Replace(arrayTypeDesc.Name, "");
-                string arrayNamePlusA = (arrayName).Replace(arrayTypeDesc.Name, "") + "a" + arrayElementTypeDesc.Name;
-                string arrayNamePlusI = (arrayName).Replace(arrayTypeDesc.Name, "") + "i" + arrayElementTypeDesc.Name;
+                string iPlusArrayName = "i" + (arrayName).Replace(VarName(arrayTypeDesc), "");
+                string arrayNamePlusA = (arrayName).Replace(VarName(arrayTypeDesc), "") + "a" + VarName(arrayElementTypeDesc);
+                string arrayNamePlusI = (arrayName).Replace(VarName(arrayTypeDesc), "") + "i" + VarName(arrayElementTypeDesc);
                 LocalBuilder localI = ilg.DeclareOrGetLocal(typeof(int), iPlusArrayName);
                 ilg.For(localI, 0, ilg.GetLocal(arrayName));
                 int count = elements.Length + (text == null ? 0 : 1);

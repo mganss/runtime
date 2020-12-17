@@ -850,6 +850,35 @@ namespace SerializationTypes
         public object Value2 = new SimpleType[1];
 
     }
+
+    namespace TypeNameClashA
+    {
+        [System.Xml.Serialization.XmlType("TypeA")]
+        public class TypeNameClash
+        {
+            public string Name { get; set; }
+        }
+    }
+
+    namespace TypeNameClashB
+    {
+        [System.Xml.Serialization.XmlType("TypeB")]
+        public class TypeNameClash
+        {
+            public string Name { get; set; }
+        }
+    }
+
+    [System.Xml.Serialization.XmlRootAttribute("Root")]
+    [System.Xml.Serialization.XmlType("ContainerType")]
+    public class NamespaceTypeNameClashContainer
+    {
+        [System.Xml.Serialization.XmlElementAttribute("A")]
+        public TypeNameClashA.TypeNameClash[] A { get; set; }
+
+        [System.Xml.Serialization.XmlElementAttribute("B")]
+        public TypeNameClashB.TypeNameClash[] B { get; set; }
+    }
 }
 
 public class TypeWithXmlElementProperty
